@@ -1,7 +1,8 @@
 function [M,output] = cp_wals(X,W,r,varargin)
 
 d = ndims(X);
-normX = norm(X);
+WX = W.*X;
+normX = norm(WX);
 
 %%
 params = inputParser;
@@ -58,6 +59,7 @@ lambda = ones(r,1);
 % Store the last MTTKRP result to accelerate fitness computation.
 U_mttkrp = zeros(size(X, dimorder(end)), r);
 
+
 %% main iterations
 for i = 1:maxiters
     
@@ -67,7 +69,7 @@ for i = 1:maxiters
     for j = dimorder(1:end)
         
         % compute MTTKRP
-        MTK = mttkrp(W.*X,U,j);
+        MTK = mttkrp(WX,U,j);
         if j == dimorder(end)
             U_mttkrp = MTK;
         end
@@ -115,13 +117,14 @@ for i = 1:maxiters
     M = ktensor(lambda,U);
     
     % This is equivalent to innerprod(X,P).
-        iprod = sum(sum(M.U{dimorder(end)} .* U_mttkrp) .* lambda');
-        if normX == 0
-            relerr = 1- (norm(M)^2 - 2 * iprod);
-        else
-            normresidual = sqrt( normX^2 + norm(M)^2 - 2 * iprod );
-            relerr = (normresidual / normX); 
-        end
+%         iprod = sum(sum(M.U{dimorder(end)} .* U_mttkrp) .* lambda');
+%         if normX == 0
+%             relerr = 1- (norm(M)^2 - 2 * iprod);
+%         else
+%             normresidual = sqrt( normX^2 + norm(M)^2 - 2 * iprod );
+%             relerr = (normresidual / normX); 
+%         end
+        relerr = norm(full(M)-WX)/normX;
         errchange = abs(errold - relerr);
         
         % Check for convergence
